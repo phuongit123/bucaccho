@@ -1,5 +1,4 @@
 import { useRef, useCallback, useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useSnakeGame, Direction, Difficulty } from './hooks/useSnakeGame';
 
 function App() {
@@ -96,14 +95,9 @@ function App() {
         <div className="flex justify-between items-center bg-gray-800/80 backdrop-blur-sm rounded-xl px-4 py-3 border border-gray-700/50">
           <div className="text-center">
             <div className="text-xs text-gray-400 uppercase tracking-wide">Score</div>
-            <motion.div
-              key={score}
-              initial={{ scale: 1.3 }}
-              animate={{ scale: 1 }}
-              className="text-2xl font-bold text-white"
-            >
+            <div className="text-2xl font-bold text-white score-pop" key={score}>
               {score}
-            </motion.div>
+            </div>
           </div>
           <div className="text-center">
             <div className="text-xs text-gray-400 uppercase tracking-wide">Best</div>
@@ -141,12 +135,9 @@ function App() {
         />
 
         {/* Food */}
-        <motion.div
+        <div
+          className="absolute food-appear"
           key={`${food.x}-${food.y}`}
-          initial={{ scale: 0, rotate: 0 }}
-          animate={{ scale: 1, rotate: 360 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-          className="absolute rounded-full"
           style={{
             left: food.x * cellSize,
             top: food.y * cellSize,
@@ -155,24 +146,19 @@ function App() {
             padding: 2,
           }}
         >
-          <div className="w-full h-full rounded-full bg-gradient-to-br from-red-400 to-red-600 shadow-lg shadow-red-500/50 flex items-center justify-center">
+          <div className="w-full h-full rounded-full bg-gradient-to-br from-red-400 to-red-600 shadow-lg shadow-red-500/50 flex items-center justify-center food-pulse">
             <span style={{ fontSize: cellSize * 0.6 }}>🍎</span>
           </div>
-        </motion.div>
+        </div>
 
         {/* Snake */}
         {snake.map((segment, index) => {
           const isHead = index === 0;
           const isTail = index === snake.length - 1;
           return (
-            <motion.div
+            <div
               key={`${segment.x}-${segment.y}-${index}`}
-              initial={isHead ? { scale: 0.8 } : {}}
-              animate={{
-                scale: isHead && justAte ? 1.2 : 1,
-              }}
-              transition={{ duration: 0.15 }}
-              className="absolute"
+              className={`absolute transition-transform duration-100 ${isHead && justAte ? 'scale-110' : 'scale-100'}`}
               style={{
                 left: segment.x * cellSize,
                 top: segment.y * cellSize,
@@ -183,13 +169,13 @@ function App() {
               }}
             >
               <div
-                className={`w-full h-full rounded-md ${
+                className={`w-full h-full ${
                   isHead
-                    ? 'bg-gradient-to-br from-green-300 to-green-500 shadow-lg shadow-green-500/40'
+                    ? 'bg-gradient-to-br from-green-300 to-green-500 shadow-lg shadow-green-500/40 rounded-lg snake-head'
                     : isTail
-                    ? 'bg-gradient-to-br from-green-600 to-green-700'
-                    : 'bg-gradient-to-br from-green-400 to-green-600'
-                } ${isHead ? 'rounded-lg' : 'rounded-sm'}`}
+                    ? 'bg-gradient-to-br from-green-600 to-green-700 rounded-sm'
+                    : 'bg-gradient-to-br from-green-400 to-green-600 rounded-sm'
+                }`}
                 style={{
                   opacity: isHead ? 1 : Math.max(0.5, 1 - index * 0.02),
                 }}
@@ -202,103 +188,68 @@ function App() {
                   </div>
                 )}
               </div>
-            </motion.div>
+            </div>
           );
         })}
 
         {/* Overlays */}
-        <AnimatePresence>
-          {gameState === 'idle' && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center z-50"
-            >
-              <motion.div
-                initial={{ y: 20 }}
-                animate={{ y: 0 }}
-                className="text-center px-6"
+        {gameState === 'idle' && (
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center z-50 overlay-fade-in">
+            <div className="text-center px-6 overlay-slide-up">
+              <div className="text-6xl mb-4">🐍</div>
+              <h2 className="text-2xl font-bold text-white mb-2">Ready to Play?</h2>
+              <p className="text-gray-300 text-sm mb-4">
+                Use arrow keys, WASD, or swipe to move
+              </p>
+              <button
+                onClick={resetGame}
+                className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl hover:from-green-400 hover:to-emerald-500 transition-all shadow-lg shadow-green-500/30 active:scale-95"
               >
-                <div className="text-6xl mb-4">🐍</div>
-                <h2 className="text-2xl font-bold text-white mb-2">Ready to Play?</h2>
-                <p className="text-gray-300 text-sm mb-4">
-                  Use arrow keys, WASD, or swipe to move
+                Start Game
+              </button>
+              <p className="text-gray-500 text-xs mt-3">or press any arrow key</p>
+            </div>
+          </div>
+        )}
+
+        {gameState === 'paused' && (
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center z-50 overlay-fade-in">
+            <div className="text-center overlay-scale-in">
+              <div className="text-5xl mb-3">⏸️</div>
+              <h2 className="text-2xl font-bold text-white mb-4">Paused</h2>
+              <button
+                onClick={togglePause}
+                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold rounded-xl hover:from-blue-400 hover:to-blue-500 transition-all shadow-lg shadow-blue-500/30 active:scale-95"
+              >
+                Resume
+              </button>
+              <p className="text-gray-500 text-xs mt-3">Press Space or tap to resume</p>
+            </div>
+          </div>
+        )}
+
+        {gameState === 'gameover' && (
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center z-50 overlay-fade-in">
+            <div className="text-center px-6 overlay-slide-up">
+              <div className="text-5xl mb-3">💀</div>
+              <h2 className="text-2xl font-bold text-red-400 mb-1">Game Over!</h2>
+              <p className="text-4xl font-bold text-white mb-1">{score}</p>
+              <p className="text-gray-400 text-sm mb-1">points</p>
+              {score >= highScore && score > 0 && (
+                <p className="text-yellow-400 font-bold mb-3 new-highscore">
+                  🎉 New High Score! 🎉
                 </p>
-                <button
-                  onClick={resetGame}
-                  className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl hover:from-green-400 hover:to-emerald-500 transition-all shadow-lg shadow-green-500/30 active:scale-95"
-                >
-                  Start Game
-                </button>
-                <p className="text-gray-500 text-xs mt-3">or press any arrow key</p>
-              </motion.div>
-            </motion.div>
-          )}
-
-          {gameState === 'paused' && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center z-50"
-            >
-              <motion.div
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
-                className="text-center"
+              )}
+              <button
+                onClick={resetGame}
+                className="mt-3 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl hover:from-green-400 hover:to-emerald-500 transition-all shadow-lg shadow-green-500/30 active:scale-95"
               >
-                <div className="text-5xl mb-3">⏸️</div>
-                <h2 className="text-2xl font-bold text-white mb-4">Paused</h2>
-                <button
-                  onClick={togglePause}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold rounded-xl hover:from-blue-400 hover:to-blue-500 transition-all shadow-lg shadow-blue-500/30 active:scale-95"
-                >
-                  Resume
-                </button>
-                <p className="text-gray-500 text-xs mt-3">Press Space or tap to resume</p>
-              </motion.div>
-            </motion.div>
-          )}
-
-          {gameState === 'gameover' && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center z-50"
-            >
-              <motion.div
-                initial={{ y: 30, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="text-center px-6"
-              >
-                <div className="text-5xl mb-3">💀</div>
-                <h2 className="text-2xl font-bold text-red-400 mb-1">Game Over!</h2>
-                <p className="text-4xl font-bold text-white mb-1">{score}</p>
-                <p className="text-gray-400 text-sm mb-1">points</p>
-                {score >= highScore && score > 0 && (
-                  <motion.p
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.5, type: 'spring' }}
-                    className="text-yellow-400 font-bold mb-3"
-                  >
-                    🎉 New High Score! 🎉
-                  </motion.p>
-                )}
-                <button
-                  onClick={resetGame}
-                  className="mt-3 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl hover:from-green-400 hover:to-emerald-500 transition-all shadow-lg shadow-green-500/30 active:scale-95"
-                >
-                  Play Again
-                </button>
-                <p className="text-gray-500 text-xs mt-3">Press Space or R to restart</p>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                Play Again
+              </button>
+              <p className="text-gray-500 text-xs mt-3">Press Space or R to restart</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Controls */}
