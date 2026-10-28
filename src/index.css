@@ -1,1 +1,45 @@
 @import "tailwindcss";
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  overscroll-behavior: none;
+  overflow: hidden;
+  touch-action: none;
+}
+
+/* Prevent text selection during gameplay */
+.select-none {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Smooth animations for snake movement */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(74, 222, 128, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(74, 222, 128, 0.6);
+  }
+}
+
+.snake-head {
+  animation: pulse-glow 1s ease-in-out infinite;
+}
+
+/* Food bounce animation */
+@keyframes food-bounce {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+.food-pulse {
+  animation: food-bounce 1s ease-in-out infinite;
+}
